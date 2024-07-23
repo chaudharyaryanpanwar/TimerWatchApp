@@ -9,9 +9,7 @@ import SwiftUI
 import WatchKit
 
 struct ContentView: View {
-    @State private var timeRemaining = 600
-    @State private var isRunning = false
-    @State private var timer : Timer?
+    @EnvironmentObject var timerModel: TimerModel
     @State private var showSetTime = false
     
     var body: some View {
@@ -20,19 +18,19 @@ struct ContentView: View {
                 .ignoresSafeArea(.all)
             
             VStack(spacing : 10){
-                Text(timeString(time : timeRemaining))
+                Text(TimerModel.timeString(time : timerModel.timeRemaining))
                     .font(.system(size: 40 , weight: .bold , design: .rounded))
                     .foregroundStyle(.white)
                     .frame(height : 50)
                 
-                Button(action : toggleTimer){
-                    Image(systemName: isRunning ? "pause.fill" : "play.fill")
+                Button(action : timerModel.toggleTimer){
+                    Image(systemName: timerModel.isRunning ? "pause.fill" : "play.fill")
                         .font(.system(size: 30))
                         .foregroundStyle(.white)
                 }
                 
                 HStack( spacing : 20){
-                    Button(action : resetTimer){
+                    Button(action : timerModel.resetTimer){
                         Image(systemName: "arrow.counterclockwise")
                             .font(.system(size: 18))
                             .foregroundStyle(.white)
@@ -54,40 +52,14 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showSetTime, content: {
-            SetTimeView(timeRemaining: $timeRemaining)
+            SetTimeView(timeRemaining: $timerModel.timeRemaining)
         })
     }
     
-    func toggleTimer (){
-        if isRunning {
-            timer?.invalidate()
-        } else {
-            timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { Timer in
-                if timeRemaining > 0 {
-                    timeRemaining -= 1
-                } else {
-                    timer?.invalidate()
-                    isRunning = false
-                    WKInterfaceDevice.current().play(.notification)
-                }
-            })
-        }
-        isRunning.toggle()
-    }
-    
-    func resetTimer(){
-        timer?.invalidate()
-        isRunning = false
-        timeRemaining = 600
-    }
-    
-    func timeString(time : Int )->String {
-        let minutes  = time / 60
-        let seconds = time % 60
-        return String(format : "%02d:%02d", minutes , seconds)
-    }
+
 }
 
 #Preview {
     ContentView()
+        .environmentObject(TimerModel())
 }
